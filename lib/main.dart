@@ -61,57 +61,7 @@ class PlaylistScreen extends StatelessWidget {
   }
 }
 
-class MusicPlayerScreen extends StatelessWidget {
-  final AudioPlayer audioPlayer = AudioPlayer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Music Player'),
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Image.asset('assets/album_art.jpg'),
-          SizedBox(height: 20),
-          Text(
-            'Song Title',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          Text('Artist Name'),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: Icon(Icons.skip_previous),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: Icon(Icons.play_arrow),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: Icon(Icons.skip_next),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: Icon(Icons.play_arrow),
-                onPressed: () {
-                  audioPlayer.play('assets/song1.mp3');
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-
-    );
-  }
-
-  class MusicPlayerScreen extends StatefulWidget {
+class MusicPlayerScreen extends StatefulWidget {
   final Song song;
   const MusicPlayerScreen({Key? key, required this.song}) : super(key: key);
 
@@ -122,7 +72,6 @@ class MusicPlayerScreen extends StatelessWidget {
   class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   final AudioPlayer audioPlayer = AudioPlayer();
   bool isPlaying = false;
-  double progress = 0.0;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
 
@@ -131,17 +80,14 @@ class MusicPlayerScreen extends StatelessWidget {
 
   @override
   void initState() {
-  super.initState();
+    super.initState();
 
-  // Load audio
   audioPlayer.setSource(AssetSource(widget.song.path));
 
-  // Listen to duration
   audioPlayer.onDurationChanged.listen((d) {
-  setState(() => duration = d);
+    setState(() => duration = d);
   });
 
-  // Listen to position
   audioPlayer.onPositionChanged.listen((p) {
   setState(() => position = p);
   });
@@ -162,7 +108,7 @@ class MusicPlayerScreen extends StatelessWidget {
   children: [
   Text(widget.song.artist, style: const TextStyle(fontSize: 18)),
 
-  // Slider for progress
+
   Slider(
   value: position.inSeconds.toDouble(),
   min: 0.0,
@@ -195,7 +141,7 @@ class MusicPlayerScreen extends StatelessWidget {
   },
   ),
 
-  // Player controls
+
   Row(
   mainAxisAlignment: MainAxisAlignment.center,
   children: [
@@ -243,34 +189,3 @@ class MusicPlayerScreen extends StatelessWidget {
   return "$minutes:$seconds";
   }
   }
-  class PlaylistScreen extends StatelessWidget{
-  @override
-  Widget build(BuildContext context){
-  return Scaffold(
-  appBar: AppBar(
-  title: Text('Playlist'),
-  ),
-  body: ListView.builder(
-  itemCount: songs.length,
-  itemBuilder: (context, index){
-  return ListTile(
-  title: Text(songs[index].title),
-  subtitle: Text(songs[index].artist),
-  onTap: () {
-  Navigator.push(
-  context,
-  MaterialPageRoute(
-  builder: (context) => MusicPlayerScreen(song: songs[index]),
-  ),
-  );
-  },
-  );
-  },
-  ),
-  );
-  }
-  }
-
-
-
-
