@@ -18,8 +18,11 @@ class Song {
 }
 
 final List<Song> songs = [
-  Song(title: "Closer", artist: "The Chainsmokers", path: "song1.mp3", albumArt: "assets/albumArt1.jpg"),
-  Song(title: "Don't let me down", artist: "The Chainsmokers", path: "song2.mp3", albumArt: "assets/albumArt2.jpg")
+  Song(title: "Setting Fires", artist: "The Chainsmokers", path: "song1.mp3", albumArt: "assets/albumArt1.jpg"),
+  Song(title: "All We Know", artist: "The Chainsmokers", path: "song2.mp3", albumArt: "assets/albumArt2.png"),
+  Song(title: "Closer", artist: "The Chainsmokers", path: "song3.mp3", albumArt: "assets/albumArt3.jpg"),
+  Song(title: "Inside Out", artist: "The Chainsmokers", path: "song4.mp3", albumArt: "assets/albumArt4.jpg"),
+  Song(title: "Don't Let Me Down", artist: "The Chainsmokers", path: "song5.mp3", albumArt: "assets/albumArt5.jpg"),
 ];
 
 
