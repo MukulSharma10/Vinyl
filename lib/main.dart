@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -11,13 +12,14 @@ class Song {
   final String title;
   final String artist;
   final String path;
+  final String albumArt;
 
-  Song({required this.title, required this.artist, required this.path});
+  Song({required this.title, required this.artist, required this.path, required this.albumArt});
 }
 
 final List<Song> songs = [
-  Song(title: "Song 1", artist: "Artist 1", path: "assets/song1.mp3"),
-  Song(title: "Song 2", artist: "Artist 2", path: "assets/song2.mp3")
+  Song(title: "Closer", artist: "The Chainsmokers", path: "song1.mp3", albumArt: "assets/albumArt1.jpg"),
+  Song(title: "Don't let me down", artist: "The Chainsmokers", path: "song2.mp3", albumArt: "assets/albumArt2.jpg")
 ];
 
 
@@ -29,48 +31,20 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: PlaylistScreen(),
-    );
-  }
-}
-
-class PlaylistScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context){
-    return Scaffold(
-      appBar: AppBar(title: Text('Your Playlist')),
-      body: ListView.builder(
-        itemCount: songs.length,
-        itemBuilder: (context, index){
-          return ListTile(
-            leading: Icon(Icons.music_note),
-            title: Text(songs[index].title),
-            subtitle: Text(songs[index].artist),
-            onTap: (){
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MusicPlayerScreen(song: songs[index]),
-                ),
-              );
-            },
-          );
-        },
-      ),
+      home: MusicPlayerScreen(),
     );
   }
 }
 
 class MusicPlayerScreen extends StatefulWidget {
-  final Song song;
-  const MusicPlayerScreen({Key? key, required this.song}) : super(key: key);
+  const MusicPlayerScreen({super.key});
 
   @override
-  _MusicPlayerScreenState createState() => _MusicPlayerScreenState();
+  State<MusicPlayerScreen> createState() => _MusicPlayerScreenState();
   }
 
   class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
-  final AudioPlayer audioPlayer = AudioPlayer();
+  final AudioPlayer _audioPlayer = AudioPlayer();
   bool isPlaying = false;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
@@ -78,43 +52,73 @@ class MusicPlayerScreen extends StatefulWidget {
   bool isShuffling = false;
   bool isRepeating = false;
 
+  int currentIndex = 0;
+  Song get currentSong => songs[currentIndex];
+
   @override
   void initState() {
     super.initState();
+    _loadSong();
 
-  audioPlayer.setSource(AssetSource(widget.song.path));
-
-  audioPlayer.onDurationChanged.listen((d) {
+  _audioPlayer.onDurationChanged.listen((d) {
     setState(() => duration = d);
   });
 
-  audioPlayer.onPositionChanged.listen((p) {
+  _audioPlayer.onPositionChanged.listen((p) {
   setState(() => position = p);
   });
   }
 
+
+  Future<void> _loadSong() async{
+    await _audioPlayer.setSource(AssetSource(currentSong.path));
+  }
+
   @override
   void dispose() {
-  audioPlayer.dispose();
+  _audioPlayer.dispose();
   super.dispose();
+  }
+
+  String formatTime(Duration d) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    return "${twoDigits(d.inMinutes)}:${twoDigits(d.inSeconds.remainder(60))}";
   }
 
   @override
   Widget build(BuildContext context) {
   return Scaffold(
-  appBar: AppBar(title: Text(widget.song.title)),
-  body: Column(
+  appBar: AppBar(title:
+  Text(currentSong.title,
+  style: TextStyle(
+    color: Colors.black,
+  fontSize: 24.0,
+  fontWeight: FontWeight.bold,
+  ),)),
+  body: Container(
+    decoration: BoxDecoration(
+      image: DecorationImage(
+        image: AssetImage(currentSong.albumArt),
+        fit: BoxFit.cover,
+        colorFilter: ColorFilter.mode(
+          Colors.black.withOpacity(0.4),
+          BlendMode.darken,
+        ),
+      ),
+    ),
+
+  child: Column(
   mainAxisAlignment: MainAxisAlignment.center,
   children: [
-  Text(widget.song.artist, style: const TextStyle(fontSize: 18)),
+  Text(currentSong.artist, style: const TextStyle(fontSize: 18, color: Colors.white)),
 
 
   Slider(
   value: position.inSeconds.toDouble(),
   min: 0.0,
-  max: duration.inSeconds.toDouble(),
+  max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1,
   onChanged: (value) {
-  audioPlayer.seek(Duration(seconds: value.toInt()));
+  _audioPlayer.seek(Duration(seconds: value.toInt()));
   },
   ),
 
@@ -129,63 +133,46 @@ class MusicPlayerScreen extends StatefulWidget {
   ),
   ),
 
-  IconButton(
-  icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 50),
-  onPressed: () async {
-  if (isPlaying) {
-  await audioPlayer.pause();
-  } else {
-  await audioPlayer.resume();
-  }
-  setState(() => isPlaying = !isPlaying);
-  },
-  ),
-
-
   Row(
-  mainAxisAlignment: MainAxisAlignment.center,
-  children: [
-  IconButton(
-  icon: Icon(Icons.shuffle,
-  color: isShuffling ? Colors.blue : null),
-  onPressed: () {
-  setState(() => isShuffling = !isShuffling);
-  },
-  ),
-  IconButton(
-  icon: const Icon(Icons.skip_previous),
-  onPressed: () {
-  },
-  ),
-  IconButton(
-  icon: const Icon(Icons.play_arrow),
-  onPressed: () {
-  },
-  ),
-  IconButton(
-  icon: const Icon(Icons.skip_next),
-  onPressed: () {
-  // implement skip next
-  },
-  ),
-  IconButton(
-  icon: Icon(Icons.repeat,
-  color: isRepeating ? Colors.blue : null),
-  onPressed: () {
-  setState(() => isRepeating = !isRepeating);
-  },
-  ),
-  ],
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      IconButton(
+        icon: const Icon(Icons.skip_previous, size: 40),
+        onPressed: (){
+          setState(() {
+            currentIndex = (currentIndex - 1 + songs.length) % songs.length;
+          });
+          _loadSong();
+          _audioPlayer.resume();
+          setState(() => isPlaying = true); },
+      ),
+      IconButton(
+        icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 60),
+        onPressed: () async {
+          if (isPlaying) {
+            await _audioPlayer.pause();
+          } else{
+            await _audioPlayer.resume();
+          }
+          setState(() => isPlaying = !isPlaying);
+          },
+      ),
+      IconButton(
+        icon: const Icon(Icons.skip_next, size: 40),
+        onPressed: () {
+          setState(() {
+            currentIndex = (currentIndex + 1) % songs.length;
+          });
+          _loadSong();
+          _audioPlayer.resume();
+          setState(() => isPlaying = true);
+        },
+      ),
+    ],
   )
   ],
   ),
+  ),
   );
-  }
-
-  String formatTime(Duration duration) {
-  String twoDigits(int n) => n.toString().padLeft(2, "0");
-  final minutes = twoDigits(duration.inMinutes.remainder(60));
-  final seconds = twoDigits(duration.inSeconds.remainder(60));
-  return "$minutes:$seconds";
   }
   }
